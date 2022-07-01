@@ -2,7 +2,7 @@
 
 <strong>About</strong><br>
 <br>
--Scraping Google news website with BeautifulSoup to find the sources of news that Google displays on their main page (ex. CNN, FOX News, ABC, etc..) and how many times that source has been used<br>
+-Scraping Google news website with BeautifulSoup to find the sources of news that Google displays as their trending news (ex. CNN, FOX News, ABC, etc..) and how many times that source has been used<br>
 -The source and the count are then stored to the MySQL database <br>
 -On subsequent searches, if the source is already present in the database the count is increased <br> 
 
