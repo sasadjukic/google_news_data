@@ -4,77 +4,81 @@ from bs4 import BeautifulSoup
 
 class Google:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.url = 'https://news.google.com/topstories?hl=en-US&gl=US&ceid=US:en'
-        self.news = requests.get(self.url)
-        self.soup = BeautifulSoup(self.news.text, 'html.parser')
 
-    def find_news_sources(self) -> list:
-        self.titles = self.soup.select(selector = '.wEwyrc.AVN2gc.uQIVzc.Sksgp')
-        return self.titles
+    def connect_url(self) -> requests.models.Response:
+        response = requests.get(self.url)
+        return response
+    
+    def find_news_sources(self, google_data) -> list:
+        soup = BeautifulSoup(google_data.text, 'html.parser')
+        news_sources = soup.find_all('span', class_ = 'vr1PYe')
+        return news_sources
 
 class DataBase:
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.mydb = mysql.connector.connect(
             host = 'localhost',
             user = 'root',
-            password = 'password',
+            password = 'Beograd91&',
             database = 'GoogleNews'
             )
 
         self.cursor = self.mydb.cursor()
 
-    def create_table(self):
+    def create_table(self) -> None:
 
-        self.sql = '''CREATE TABLE newssources (id INT AUTO_INCREMENT PRIMARY KEY,
+        sql = '''CREATE TABLE newssources (id INT AUTO_INCREMENT PRIMARY KEY,
                                                news_source VARCHAR(50),
                                                times_used INT(10))'''
 
-        self.cursor.execute(self.sql)
+        self.cursor.execute(sql)
         self.mydb.commit()
 
-    def search_data(self, s_news) -> None:
+    def search_data(self, s_news: dict[str, int]) -> None:
         
         for key, value in s_news.items():
-            self.sql = f'SELECT times_used FROM newssources WHERE news_source = "{key}"'
-            self.cursor.execute(self.sql)
-            self.number = self.cursor.fetchall()
+            sql = f'SELECT times_used FROM newssources WHERE news_source = "{key}"'
+            self.cursor.execute(sql)
+            number = self.cursor.fetchall()
             
-            if self.number == []:
+            if number == []:
                 self.write_data(key, value)
             else:
-                update_search_numbers = self.number[0][0] + value
+                update_search_numbers = number[0][0] + value
                 self.update_data(key, update_search_numbers)
 
-    def write_data(self, w_name, w_number) -> None:
+    def write_data(self, w_name: str, w_number: int) -> None:
 
-        self.sql = 'INSERT INTO newssources (news_source, times_used) VALUES (%s, %s)'
-        self.val = (w_name, w_number)
+        sql = 'INSERT INTO newssources (news_source, times_used) VALUES (%s, %s)'
+        val = (w_name, w_number)
 
-        self.cursor.execute(self.sql, self.val)
+        self.cursor.execute(sql, val)
         self.mydb.commit()
 
-    def update_data(self, u_name, u_data) -> None:
+    def update_data(self, u_name: str, u_data: int) ->  None:
         
-        self.sql = 'UPDATE newssources SET times_used = %s WHERE news_source = %s'
-        self.val = (u_data, u_name)
-        self.cursor.execute(self.sql, self.val)
+        sql = 'UPDATE newssources SET times_used = %s WHERE news_source = %s'
+        val = (u_data, u_name)
+        self.cursor.execute(sql, val)
         self.mydb.commit()
 
 def main():
     google = Google()
-    sources = google.find_news_sources()
-    news_outlet = {}
+    response = google.connect_url()
+    sources = google.find_news_sources(response)
+    news_outlets = {}
 
     for name in sources:
-        if name.text in news_outlet:
-            news_outlet[name.text] += 1
+        if name.text in news_outlets:
+            news_outlets[name.text] += 1
         else:
-            news_outlet.setdefault(name.text, 1)
+            news_outlets[name.text] = 1
 
     db = DataBase()
-    db.search_data(news_outlet)
+    db.search_data(news_outlets)
 
 if __name__ == '__main__':
     main()
